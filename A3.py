@@ -10,14 +10,15 @@ OUTGOING = "---->"
 INCOMING = "<----"
 MOUNTAIN = timezone(US/Mountain)
 
-class ProxyServer():
-
+class MyTCPHandler(socketserver.BaseRequestHandler):
+	CONNECTED = False                   # connection flag
+	BUFFER_SIZE = 4096
 	loggingCommands = ['-raw','-strip','-hex', '-autoN']
 
 
-	def replace():
+	def replace(response, target, targetReplacement):
 
-	def logging():
+	def logging(response):
 
 	def requests(srcPort, server, dstPort):
 
@@ -25,10 +26,9 @@ class ProxyServer():
 	# MAIN FUNCTION HERE
 	def handle(self):
 
-		#Current Date + Time
-		dateTime = datetime.now(MOUNTAIN)
-
 		#CONNECTION
+		self.CONNECTED = True
+		dateTime = datetime.now(MOUNTAIN) #Current Date + Time
 		print("Connection from: " + self.client_address[0] + " @: " + dateTime)
 
 		# Taken from Assignment 2 
@@ -71,7 +71,7 @@ class ProxyServer():
 					#CALL REPLACE FUNCTION
 					response = self.replace(response, target, targetReplacement)
 					#CALL LOGGING FUNCTION
-					response = self.logging()
+					response = self.logging(response)
 					
 				else:
 					sys.argv[1] = logCommand
@@ -81,7 +81,7 @@ class ProxyServer():
 					#CALL REQUEST FUNCTION
 					response = self.requests(srcPort, server, dstPort)
 					#CALL LOGGING FUNCTION
-					response = self.logging()
+					response = self.logging(response)
 
 			elif sys.argv[1] == "-replace": #Replace only; no logging
 				sys.argv[2] = target
