@@ -64,7 +64,6 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 		dateTime = datetime.now(MOUNTAIN) #Current Date + Time
 		print("Connection from: " + self.client_address[0] + " @: " + dateTime)
 
-		# Taken from Assignment 2 
 		while self.CONNECTED:
 			data = self.request.recv(self.BUFFER_SIZE)
 			# Check the input
@@ -77,16 +76,59 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 			if len(data) == 0:
 				break 
 			data = data.decode("utf-8")
-			print("%s wrote: %s" % (self.client_address[0], data.strip()))
-			self.inputActions(data)
-		# End Taken from Assignment 2
+			#print("%s wrote: %s" % (self.client_address[0], data.strip()))
+			#self.inputActions(data)
+
 
 		#Check Commands
 		"""
 		This part is just getting the commands from the user
 		Then it determines which functions to call based on which command has been entered
 		"""
-		errorMessage = "Please try again. Correct input is..... "
+		errorMessage = "\n".join([
+			"Input error.",
+			"\nUsage: [logOptions] [replaceOptions] srcPort server dstPort",
+			"\nlogOptions usage: [-raw, -strip, -hex, -autoN]",
+			"\nreplaceOptions usage: -replace <target> <targetReplacement>"
+			])
+
+
+		try:
+
+			# Get Essentials
+			
+			dstPort = int(sys.argv[len(sys.argv) - 1])
+			server = (sys.argv[len(sys.argv) - 2])
+			srcPort = int(sys.argv[len(sys.argv) - 3])
+
+			# Set flags initially to false
+			logFlag = False 
+			replaceFlag = False 
+
+			# Get check for logging or replacement flags
+			if sys.argv[1] in self.loggingCommands:
+				logFlag = True
+				logCommand = sys.argv[1]
+			if sys.argv[1] == "-replace" or sys.argv[2] == "-replace":
+				replaceFlag = True
+				target = (sys.argv[len(sys.argv) - 5]
+				targetReplacement = (sys.argv[len(sys.argv) - 4]
+			
+			# Call commands here
+			response = self.requests(srcPort, server, dstPort)
+
+			if logFlag == True:
+				self.logging(response, logCommand)
+			if replaceFlag == True:
+				self.replacer(response,target,targetReplacement)
+
+			# Send out final response
+			print(response)
+		except:
+			response = errorMessage
+
+
+		#BEGIN INEFFICIENT CODE (GONNA SCRAP THIS PART, HERE JUST FOR REFERENCE)
 		try:
 			if sys.argv[1] in self.loggingCommands: #If logging enabled
 				if sys.argv[2] == "-replace": #If replace with logging
@@ -139,6 +181,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 			print(response)
 		except:
 			print(errorMessage)
+		#END INEFFICIENT CODE
 
 """
 THIS IS STILL A2 CODE
