@@ -4,6 +4,7 @@ import sys
 import threading
 import asyncore
 import datetime
+import requests
 from pytz import timezone
 
 OUTGOING = "---->"
@@ -15,17 +16,49 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	BUFFER_SIZE = 4096
 	loggingCommands = ['-raw','-strip','-hex', '-autoN']
 
+	"""
+	REPLACE: Not Tested -------------------------------------------------------------------------------------------------------
+	"""
+	#Read response as a string, replace target string with replacement string
+	def replacer(response, target, targetReplacement):
+		response = str(response)
+		target = str(target)
+		targetReplacement = str(targetReplacement)
+		response = response.replace(target, targetReplacement)
+		return response
 
-	def replace(response, target, targetReplacement):
+	"""
+	LOGGING: Work in Progress ------------------------------------------------------------------------------------------------
+	"""
+	def logging(response, logCommand):
+		response = response
+		logCommand = logCommand
+		if logCommand == "-raw":
+			#
+		elif logCommand == "-strip":
+			#
+		elif logCommand == "-hex":
+			#
+		elif logCommand == "-autoN":
+			#
 
-	def logging(response):
 
+
+	#CONNECT TO REMOTE SERVER
+	"""
+	REQUESTS: Work in Progress -----------------------------------------------------------------------------------------------
+	"""
 	def requests(srcPort, server, dstPort):
+		#CREATE TCP/IP SOCKET
+		# https://docs.python.org/3/howto/sockets.html
+		remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		remoteSocket.connect(server, dstPort)
 
-
+	"""
+	HANDLE: ------------------------------------------------------------------------------------------------------------------
+	"""
 	# MAIN FUNCTION HERE
 	def handle(self):
-
 		#CONNECTION
 		self.CONNECTED = True
 		dateTime = datetime.now(MOUNTAIN) #Current Date + Time
@@ -48,56 +81,56 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 			self.inputActions(data)
 		# End Taken from Assignment 2
 
-		# Connect to Remote Server
-
-
-
 		#Check Commands
+		"""
+		This part is just getting the commands from the user
+		Then it determines which functions to call based on which command has been entered
+		"""
 		errorMessage = "Please try again. Correct input is..... "
-		"""
-		LOL dammit the sys.argv[] = x is backwards
-		"""
 		try:
 			if sys.argv[1] in self.loggingCommands: #If logging enabled
 				if sys.argv[2] == "-replace": #If replace with logging
-					sys.argv[1] = logCommand
-					sys.argv[3] = target
-					sys.argv[4] = targetReplacement
-					sys.argv[5] = srcPort
-					sys.argv[6] = server
-					sys.argv[7] = dstPort
-					#CALL REQUEST FUNCTION
+					logCommand = sys.argv[1] 
+					target = sys.argv[3] 
+					targetReplacement = sys.argv[4] 
+					srcPort = sys.argv[5]
+					server = sys.argv[6]  
+					dstPort = sys.argv[7] 
+
+					#CALL REQUEST FUNCTION (Get response from server or w.e)
 					response = self.requests(srcPort, server, dstPort)
-					#CALL REPLACE FUNCTION
-					response = self.replace(response, target, targetReplacement)
-					#CALL LOGGING FUNCTION
-					response = self.logging(response)
+					#CALL LOGGING FUNCTION (Log the response)
+					"""Maybe this shouldn't modify 'response'"""
+					response = self.logging(response, logCommand)
+					#CALL REPLACE FUNCTION (Replace the http stuff or w.e)
+					response = self.replacer(response, target, targetReplacement)
 					
 				else:
-					sys.argv[1] = logCommand
-					sys.argv[4] = srcPort
-					sys.argv[5] = server
-					sys.argv[6] = dstPort
+					logCommand = sys.argv[1] 
+					srcPort = sys.argv[4]
+					server = sys.argv[5]  
+					dstPort = sys.argv[6] 
+
 					#CALL REQUEST FUNCTION
 					response = self.requests(srcPort, server, dstPort)
 					#CALL LOGGING FUNCTION
-					response = self.logging(response)
+					response = self.logging(response, logCommand)
 
 			elif sys.argv[1] == "-replace": #Replace only; no logging
-				sys.argv[2] = target
-				sys.argv[3] = targetReplacement
-				sys.argv[4] = srcPort
-				sys.argv[5] = server
-				sys.argv[6] = dstPort
+				target = sys.argv[2] 
+				targetReplacement = sys.argv[3] 
+				srcPort = sys.argv[4]
+				server = sys.argv[5]  
+				dstPort = sys.argv[6] 
 				#CALL REQUEST FUNCTION
 				response = self.requests(srcPort, server, dstPort)
 				#CALL REPLACE FUNCTION
-				response = self.replace(response, target, targetReplacement)
+				response = self.replacer(response, target, targetReplacement)
 
 			elif len(sys.argv) == 4: #No logging and replace
-				sys.argv[1] = srcPort
-				sys.argv[2] = server
-				sys.argv[3] = dstPort
+				sys.argv[1] = srcPort = sys.argv[1] 
+				server = sys.argv[2] 
+				dstPort = sys.argv[3] 
 				#CALL REQUEST FUNCTION
 				response = self.requests(srcPort, server, dstPort)
 			else:
