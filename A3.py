@@ -112,7 +112,7 @@ if __name__ == "__main__":
 	elif len(sys.argv) < 8 and sys.argv[1] == "-log":
 		print("-not good enough replace args")
 		sys.exit()
-	elif len(sys.argv) < 9:
+	elif len(sys.argv) < 9 and len(sys.argv) > 3:
 
 		#Check Commands
 		"""
@@ -141,13 +141,16 @@ if __name__ == "__main__":
 			PORT = srcPort
 
 			# Get check for logging or replacement flags
-			if sys.argv[1] in self.loggingCommands:
+			if sys.argv[1] in loggingCommands:
 				logFlag = True
 				logCommand = sys.argv[1]
+				print("Running Log: " + str(logCommand))
 			if sys.argv[1] == "-replace" or sys.argv[2] == "-replace":
 				replaceFlag = True
 				target = (sys.argv[len(sys.argv) - 5])
 				targetReplacement = (sys.argv[len(sys.argv) - 4])
+				print("Running replacement: " + str(target) + " replaced by: " + str(targetReplacement))
+
 			
 
 		except:
