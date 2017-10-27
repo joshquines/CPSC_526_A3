@@ -1,5 +1,5 @@
 import socket
-import SocketServer
+import socketserver
 import sys
 import threading
 import asyncore
@@ -10,18 +10,19 @@ import traceback
 
 OUTGOING = "---->"
 INCOMING = "<----"
-MOUNTAIN = timezone(US/Mountain)
+#MOUNTAIN = timezone(US/Mountain)
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
 	CONNECTED = False                   # connection flag
 	BUFFER_SIZE = 4096
-	loggingCommands = ['-raw','-strip','-hex', '-autoN']
 
 	"""
 	REPLACE: Not Tested -------------------------------------------------------------------------------------------------------
 	"""
 	#Read response as a string, replace target string with replacement string
-	def replacer(response, target, targetReplacement):
+	def replacer(data, response, target, targetReplacement):
+		"""Might have to change this to deal with bytearray instead of string"""
+		data = data
 		response = str(response)
 		target = str(target)
 		targetReplacement = str(targetReplacement)
@@ -31,16 +32,20 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	"""
 	LOGGING: Work in Progress ------------------------------------------------------------------------------------------------
 	"""
-	def logging(response, logCommand):
+	def logging(data, response, logCommand):
 		response = response
 		logCommand = logCommand
 		if logCommand == "-raw":
 			#
+			deletethis = 1
 		elif logCommand == "-strip":
+			deletethis = 1
 			#
 		elif logCommand == "-hex":
+			deletethis = 1
 			#
 		elif logCommand == "-autoN":
+			deletethis = 1
 			#
 
 
@@ -62,7 +67,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		#Receive data from user
 		self.CONNECTED = True
-		dateTime = datetime.now(MOUNTAIN) #Current Date + Time
+		dateTime = datetime.now() #Current Date + Time
 		print("Connection from: " + self.client_address[0] + " @: " + dateTime)
 
 		while self.CONNECTED:
@@ -80,13 +85,14 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
 		#OPEN REMOTE SOCKET HERE
 
-		# Call commands here
+		# Call commands here, get initial response
 		response = self.requests(srcPort, server, dstPort, data)
 
+		# Replace, log
 		if logFlag == True:
-			self.logging(response, logCommand)
+			self.logging(data, response, logCommand)
 		if replaceFlag == True:
-			self.replacer(response,target,targetReplacement)
+			self.replacer(data, response,target,targetReplacement)
 
 		# Send out final response
 		print(response)
@@ -99,47 +105,55 @@ THIS IS STILL A2 CODE
 if __name__ == "__main__":
 	HOST = "localhost"
 
+	#Correct number of args check
+	if len(sys.argv) < 7 and sys.argv[1] == "-replace":
+		print("-not good enough replace args")
+		sys.exit()
+	elif len(sys.argv) < 8 and sys.argv[1] == "-log":
+		print("-not good enough replace args")
+		sys.exit()
+	elif len(sys.argv) < 9:
 
-	#Check Commands
-	"""
-	This part is just getting the commands from the user
-	Then it sets flags for replace and/or log 
-	"""
-	errorMessage = "\n".join([
-		"Input error.",
-		"\nUsage: [logOptions] [replaceOptions] srcPort server dstPort",
-		"\nlogOptions usage: [-raw, -strip, -hex, -autoN]",
-		"\nreplaceOptions usage: -replace <target> <targetReplacement>"
-		])
+		#Check Commands
+		"""
+		This part is just getting the commands from the user
+		Then it sets flags for replace and/or log 
+		"""
+		errorMessage = "\n".join([
+			"Input error.",
+			"\nUsage: [logOptions] [replaceOptions] srcPort server dstPort",
+			"\nlogOptions usage: [-raw, -strip, -hex, -autoN]",
+			"\nreplaceOptions usage: -replace <target> <targetReplacement>"
+			])
 
-	try:
+		try:
+			global logFlag, replaceFlag, dstPort, server, srcPort, target, targetReplacement
+			loggingCommands = ['-raw','-strip','-hex', '-autoN']
 
-		# Set flags initially to false
-		logFlag = False 
-		replaceFlag = False 
+			# Set flags initially to false
+			logFlag = False 
+			replaceFlag = False 
 
-		# Get Essentials	
-		dstPort = int(sys.argv[len(sys.argv) - 1])
-		server = (sys.argv[len(sys.argv) - 2])
-		srcPort = int(sys.argv[len(sys.argv) - 3])
+			# Get Essentials	
+			dstPort = int(sys.argv[len(sys.argv) - 1])
+			server = (sys.argv[len(sys.argv) - 2])
+			srcPort = int(sys.argv[len(sys.argv) - 3])
+			PORT = srcPort
 
-		# Get check for logging or replacement flags
-		if sys.argv[1] in self.loggingCommands:
-			logFlag = True
-			logCommand = sys.argv[1]
-		if sys.argv[1] == "-replace" or sys.argv[2] == "-replace":
-			replaceFlag = True
-			target = (sys.argv[len(sys.argv) - 5]
-			targetReplacement = (sys.argv[len(sys.argv) - 4]
-		
+			# Get check for logging or replacement flags
+			if sys.argv[1] in self.loggingCommands:
+				logFlag = True
+				logCommand = sys.argv[1]
+			if sys.argv[1] == "-replace" or sys.argv[2] == "-replace":
+				replaceFlag = True
+				target = (sys.argv[len(sys.argv) - 5])
+				targetReplacement = (sys.argv[len(sys.argv) - 4])
+			
 
-	except:
-		response = errorMessage
-		tb = traceback.format_exc()
-		print (tb)
-
-	if len(sys.argv) > 1:
-		PORT = int(sys.argv[1])
+		except:
+			response = errorMessage
+			tb = traceback.format_exc()
+			print (tb)
 	else:
 		print("Port number not specified.")
 		print("Usage: python3 A2.py <port>\n")
