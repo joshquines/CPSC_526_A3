@@ -2,9 +2,7 @@ import socket
 import socketserver
 import sys
 import threading
-import datetime
-#import requests
-#from pytz import timezone
+import time
 import traceback
 
 OUTGOING = "---->"
@@ -82,8 +80,8 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		#Receive data from user
 		self.CONNECTED = True
-		dateTime = datetime.now(TIMEZONE) #Current Date + Time
-		print("Connection from: " + self.client_address[0] + " @: " + dateTime)
+		timeNow = time.strftime("%a %b %d %H:%M:%S")
+		print("New Connection: " + timeNow + ", from " + self.client_address[0])
 
 		while self.CONNECTED:
 			data = self.request.recv(self.BUFFER_SIZE)
@@ -101,16 +99,16 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 		#OPEN REMOTE SOCKET HERE
 
 		# Call commands here, get initial response
-		response = self.requests(srcPort, server, dstPort, data)
+		#response = self.requests(srcPort, server, dstPort, data)
 
 		# Replace, log
-		if logFlag == True:
-			self.logging(data, response, logCommand)
-		if replaceFlag == True:
-			self.replacer(data, response,target,targetReplacement)
+		#if logFlag == True:
+		#	self.logging(data, response, logCommand)
+		#if replaceFlag == True:
+		#	self.replacer(data, response,target,targetReplacement)
 
 		# Send out final response
-		print(response)
+		#print(response)
 
 
 
