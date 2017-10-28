@@ -5,14 +5,29 @@ import threading
 import time
 import traceback
 
+
 OUTGOING = "---->"
 INCOMING = "<----"
-TIMEZONE = None #timezone(US/Mountain) # Need to install pytz library
+SRC_PORT = 0
+HOST = ''
+DST_PORT = 0
+LOG_OPTIONS = ['-raw', '-strip', '-hex', '-auto32']
+LOG_FLAG = False
+LOG_COMMAND = 'none'
+REPLACE_FLAG = False
+ORIGINAL_T = ''
+REPLACE_T = ''
+
+
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
 	CONNECTED = False                   # connection flag
+	
 	BUFFER_SIZE = 4096
 
+
+
+	
 	"""
 	REPLACE: Not Tested -------------------------------------------------------------------------------------------------------
 	"""
@@ -116,8 +131,58 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 THIS IS STILL A2 CODE
 """
 if __name__ == "__main__":
-	HOST = "localhost"
+		
+	if len(sys.argv) < 4 or len(sys.argv) == 6 or len(sys.argv) > 8 : 	# Minimum number of arguments is 3, maximum is 7
+																		#Impossible to have ./A2.py + 5 arguments
+		print("\nIncorrect number of parameters: ")
+		print("Usage: ./A3.py [logOptions] [replaceOptions] srcPort server dstPort")
+		print("[logOptions] and [replaceOptions] are optional parameters")
+		print("[replaceOptions] takes in 2 parameters\n")
+		sys.exit(0)
+	elif len(sys.argv) == 5: #logOptions is always first arg
+		if sys.argv[1] in LOG_OPTIONS:
+			LOG_FLAG = True
+			LOG_COMMAND = sys.argv[1]
+			#print("Log command = " + LOG_COMMAND)
+		else: #user wrote something over than a logOption
+			print("\nIncorrect Usage of Logging Program: ")
+			print("Usage: ./A3.py [logOptions] [replaceOptions] srcPort server dstPort")
+			print("[logOptions] and [replaceOptions] are optional parameters")
+			print("[replaceOptions] takes in 2 parameters\n")
+			sys.exit(0)
+	else: # More than 4 arguments, logoPtion is always first arg
+		if sys.argv[1] in LOG_OPTIONS:
+			LOG_FLAG = True
+			LOG_COMMAND = sys.argv[1]
+			print("Log command = " + LOG_COMMAND)
 
+			
+	DST_PORT = int(sys.argv[len(sys.argv) - 1])
+	HOST = sys.argv[len(sys.argv) - 2]
+	SRC_PORT = int(sys.argv[len(sys.argv) - 3])
+
+	if '-replace' in sys.argv: # if -replace is an argument
+		REPLACE_FLAG = True
+		replaceIndex = sys.argv.index('-replace')
+		print("found replace at index: " + str(replaceIndex))
+		ORIGINAL_T = sys.argv[replaceIndex + 1]
+		REPLACE_T = sys.argv[replaceIndex + 2]
+		if ORIGINAL_T == str(SRC_PORT) or REPLACE_T == str(SRC_PORT):
+			print("\nIncorrect Usage of -replace  ")
+			print("Usage: ./A3.py [logOptions] [replaceOptions] srcPort server dstPort")
+			print("[logOptions] and [replaceOptions] are optional parameters")
+			print("[replaceOptions] takes in 2 parameters\n")
+			sys.exit(0)
+	
+	#print(ORIGINAL_T,REPLACE_T)
+
+	print("Port logger running: srcPort=" + str(SRC_PORT) + " host=" + HOST + " dstPort=" + str(DST_PORT))
+	#print("Log command = " + LOG_COMMAND)
+
+	server = socketserver.ThreadingTCPServer((HOST, SRC_PORT), MyTCPHandler)
+	server.serve_forever()
+
+"""
 	#Correct number of args check
 	if len(sys.argv) < 7 and sys.argv[1] == "-replace":
 		print("-not good enough replace args")
@@ -128,10 +193,10 @@ if __name__ == "__main__":
 	elif len(sys.argv) < 9 and len(sys.argv) > 3:
 
 		#Check Commands
-		"""
+		
 		This part is just getting the commands from the user
 		Then it sets flags for replace and/or log 
-		"""
+		
 		errorMessage = "\n".join([
 			"Input error.",
 			"\nUsage: [logOptions] [replaceOptions] srcPort server dstPort",
@@ -176,10 +241,11 @@ if __name__ == "__main__":
 		sys.exit()
 
 	try:
-		server = socketserver.TCPServer((HOST, PORT), MyTCPHandler)
+		server = socketserver.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
 		print("Listening to PORT: " + str(PORT))
 		server.serve_forever()
 
 	except Exception as e:
 		print("An error occured: " + str(e))
 		sys.exit()
+"""
