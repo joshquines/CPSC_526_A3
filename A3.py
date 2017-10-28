@@ -2,15 +2,14 @@ import socket
 import socketserver
 import sys
 import threading
-import asyncore
 import datetime
-import requests
-from pytz import timezone
+#import requests
+#from pytz import timezone
 import traceback
 
 OUTGOING = "---->"
 INCOMING = "<----"
-#MOUNTAIN = timezone(US/Mountain)
+TIMEZONE = None #timezone(US/Mountain) # Need to install pytz library
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
 	CONNECTED = False                   # connection flag
@@ -33,14 +32,30 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	LOGGING: Work in Progress ------------------------------------------------------------------------------------------------
 	"""
 	def logging(data, response, logCommand):
-		response = response
+		data = data.split(b'\r\n')
+		response = response.split(b'\r\n')
 		logCommand = logCommand
 		if logCommand == "-raw":
-			#
-			deletethis = 1
+			for line in data:
+				print(OUTGOING, end="")
+				for x in line:
+					print(chr(x), end="")
+			for line in response:
+				print(INCOMING, end="")
+				for x in line:
+					print(chr(x), end="")
+
 		elif logCommand == "-strip":
-			deletethis = 1
-			#
+			for line in data:
+				print(OUTGOING, end="")
+				for x in line:
+					#ADD CHECK IF PRINTABLE CHR HERE
+					"""if x not printable, char = x"""
+					print(chr(x), end="")
+			for line in response:
+				print(INCOMING, end="")
+				for x in line:
+					print(chr(x), end="")
 		elif logCommand == "-hex":
 			deletethis = 1
 			#
@@ -67,7 +82,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		#Receive data from user
 		self.CONNECTED = True
-		dateTime = datetime.now() #Current Date + Time
+		dateTime = datetime.now(TIMEZONE) #Current Date + Time
 		print("Connection from: " + self.client_address[0] + " @: " + dateTime)
 
 		while self.CONNECTED:
