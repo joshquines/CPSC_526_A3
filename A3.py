@@ -44,7 +44,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 		data = data.split(b'\r\n')
 		response = response.split(b'\r\n')
 		logCommand = logCommand
+		
+		#RAW
 		if logCommand == "-raw":
+			print("DEBUG: raw log")
 			for line in data:
 				print(OUTGOING, end="")
 				for x in line:
@@ -54,21 +57,35 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 				for x in line:
 					print(chr(x), end="")
 
+		#STRIP
 		elif logCommand == "-strip":
+			print("DEBUG: strip log")
 			for line in data:
 				print(OUTGOING, end="")
 				for x in line:
 					#ADD CHECK IF PRINTABLE CHR HERE
-					"""if x not printable, char = x"""
+					if not(x in string.printable):
+						x = "."
 					print(chr(x), end="")
+
 			for line in response:
 				print(INCOMING, end="")
 				for x in line:
+					#ADD CHECK IF PRINTABLE CHR HERE
+					if not(x in string.printable):
+						x = "."
 					print(chr(x), end="")
+
+		#HEXDUMP
 		elif logCommand == "-hex":
-			deletethis = 1
-			#
+			print("DEBUG: hex log")
+			for line in data:
+				for x in line:
+					hx = ":".join("{:02x}".format(ord(c)) for c in x)
+					print(hx, end="")
+		#AUTON
 		elif logCommand == "-autoN":
+			print("DEBUG: autoN log")
 			deletethis = 1
 			#
 
@@ -88,6 +105,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	HANDLE: ------------------------------------------------------------------------------------------------------------------
 	"""
 	# MAIN FUNCTION HERE
+	print("DEBUG: begin handle")
 	def handle(self):
     	
 		serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)			# Create a socket object
