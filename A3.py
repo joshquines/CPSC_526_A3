@@ -66,7 +66,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 					#ADD CHECK IF PRINTABLE CHR HERE
 					if not(x in string.printable):
 						x = "."
-					print(chr(x), end="")
+					print(x, end="")
 
 			for line in response:
 				print(INCOMING, end="")
@@ -74,12 +74,18 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 					#ADD CHECK IF PRINTABLE CHR HERE
 					if not(x in string.printable):
 						x = "."
-					print(chr(x), end="")
+					print(x, end="")
 
 		#HEXDUMP
 		elif logCommand == "-hex":
 			print("DEBUG: hex log")
 			for line in data:
+				print(OUTGOING, end="")
+				for x in line:
+					hx = ":".join("{:02x}".format(ord(c)) for c in x)
+					print(hx, end="")
+			for line in response:
+				print(INCOMING, end="")
 				for x in line:
 					hx = ":".join("{:02x}".format(ord(c)) for c in x)
 					print(hx, end="")
@@ -104,7 +110,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 		#Get Response
 		response = (remoteSocket.recv(4096)).decode("utf-8")
 		print("DEBUG: \n")
-		print(response)
+		print(response) #debug
 		return response
 
 	"""
