@@ -99,8 +99,13 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 		#CREATE TCP/IP SOCKET
 		remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		remoteSocket.connect(server, dstPort)
-		#Send
+		#Send Data
 		remoteSocket.send(data)
+		#Get Response
+		response = (remoteSocket.recv(4096)).decode("utf-8")
+		print("DEBUG: \n")
+		print(response)
+		return response
 
 	"""
 	HANDLE: ------------------------------------------------------------------------------------------------------------------
