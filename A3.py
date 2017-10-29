@@ -95,11 +95,12 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	"""
 	REQUESTS: Work in Progress -----------------------------------------------------------------------------------------------
 	"""
-	def requests(srcPort, server, dstPort):
+	def requests(data, srcPort, server, dstPort):
 		#CREATE TCP/IP SOCKET
-		# https://docs.python.org/3/howto/sockets.html
 		remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		remoteSocket.connect(server, dstPort)
+		#Send
+		remoteSocket.send(data)
 
 	"""
 	HANDLE: ------------------------------------------------------------------------------------------------------------------
