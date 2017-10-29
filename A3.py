@@ -5,7 +5,7 @@ import threading
 import time
 import traceback
 
-
+#GLOBAL VARIABLES
 OUTGOING = "---->"
 INCOMING = "<----"
 SRC_PORT = 0
@@ -19,15 +19,11 @@ ORIGINAL_T = ''
 REPLACE_T = ''
 
 
-
 class MyTCPHandler(socketserver.BaseRequestHandler):
 	CONNECTED = False                   # connection flag
-	
 	BUFFER_SIZE = 4096
 
 
-
-	
 	"""
 	REPLACE: Not Tested -------------------------------------------------------------------------------------------------------
 	"""
@@ -93,6 +89,9 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	"""
 	# MAIN FUNCTION HERE
 	def handle(self):
+    	
+		
+    	"""
 		#Receive data from user
 		self.CONNECTED = True
 		timeNow = time.strftime("%a %b %d %H:%M:%S")
@@ -125,7 +124,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 		# Send out final response
 		#print(response)
 
-
+		"""
 
 """
 THIS IS STILL A2 CODE
@@ -181,71 +180,3 @@ if __name__ == "__main__":
 
 	server = socketserver.ThreadingTCPServer((HOST, SRC_PORT), MyTCPHandler)
 	server.serve_forever()
-
-"""
-	#Correct number of args check
-	if len(sys.argv) < 7 and sys.argv[1] == "-replace":
-		print("-not good enough replace args")
-		sys.exit()
-	elif len(sys.argv) < 8 and sys.argv[1] == "-log":
-		print("-not good enough replace args")
-		sys.exit()
-	elif len(sys.argv) < 9 and len(sys.argv) > 3:
-
-		#Check Commands
-		
-		This part is just getting the commands from the user
-		Then it sets flags for replace and/or log 
-		
-		errorMessage = "\n".join([
-			"Input error.",
-			"\nUsage: [logOptions] [replaceOptions] srcPort server dstPort",
-			"\nlogOptions usage: [-raw, -strip, -hex, -autoN]",
-			"\nreplaceOptions usage: -replace <target> <targetReplacement>"
-			])
-
-		try:
-			global logFlag, replaceFlag, dstPort, server, srcPort, target, targetReplacement
-			loggingCommands = ['-raw','-strip','-hex', '-autoN']
-
-			# Set flags initially to false
-			logFlag = False 
-			replaceFlag = False 
-
-			# Get Essentials	
-			dstPort = int(sys.argv[len(sys.argv) - 1])
-			server = (sys.argv[len(sys.argv) - 2])
-			srcPort = int(sys.argv[len(sys.argv) - 3])
-			PORT = srcPort
-
-			# Get check for logging or replacement flags
-			if sys.argv[1] in loggingCommands:
-				logFlag = True
-				logCommand = sys.argv[1]
-				print("Running Log: " + str(logCommand))
-			if sys.argv[1] == "-replace" or sys.argv[2] == "-replace":
-				replaceFlag = True
-				target = (sys.argv[len(sys.argv) - 5])
-				targetReplacement = (sys.argv[len(sys.argv) - 4])
-				print("Running replacement: " + str(target) + " replaced by: " + str(targetReplacement))
-
-			
-
-		except:
-			response = errorMessage
-			tb = traceback.format_exc()
-			print (tb)
-	else:
-		print("Port number not specified.")
-		print("Usage: python3 A2.py <port>\n")
-		sys.exit()
-
-	try:
-		server = socketserver.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
-		print("Listening to PORT: " + str(PORT))
-		server.serve_forever()
-
-	except Exception as e:
-		print("An error occured: " + str(e))
-		sys.exit()
-"""
