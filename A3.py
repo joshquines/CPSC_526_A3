@@ -90,7 +90,14 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 	# MAIN FUNCTION HERE
 	def handle(self):
     	
-		
+		serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)			# Create a socket object
+    	serverSocket.bind((HOST, SRC_PORT))
+   	 	serverSocket.listen(5)
+
+		while True:
+    		client, client_addr = serverSocket,accept()
+			clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			client_socket.connect((SERVER, DST_PORT))
     	"""
 		#Receive data from user
 		self.CONNECTED = True
@@ -155,9 +162,9 @@ if __name__ == "__main__":
 			LOG_COMMAND = sys.argv[1]
 			print("Log command = " + LOG_COMMAND)
 
-			
+	HOST = "localhost"
 	DST_PORT = int(sys.argv[len(sys.argv) - 1])
-	HOST = sys.argv[len(sys.argv) - 2]
+	SERVER = sys.argv[len(sys.argv) - 2]
 	SRC_PORT = int(sys.argv[len(sys.argv) - 3])
 
 	if '-replace' in sys.argv: # if -replace is an argument
