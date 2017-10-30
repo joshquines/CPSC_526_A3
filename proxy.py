@@ -1,3 +1,8 @@
+"""
+CPSC 526 Assignment #3
+Steven Leong 10129668 T01
+Josh Quines 10138118 T03
+"""
 import socket
 import socketserver
 import sys
