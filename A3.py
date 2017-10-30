@@ -4,6 +4,8 @@ import sys
 import threading
 import time
 import traceback
+import select
+import string
 
 #GLOBAL VARIABLES
 OUTGOING = "---->"
@@ -11,163 +13,181 @@ INCOMING = "<----"
 SRC_PORT = 0
 HOST = ''
 DST_PORT = 0
-LOG_OPTIONS = ['-raw', '-strip', '-hex', '-auto32']
+LOG_OPTIONS = ['-raw', '-strip', '-hex']
 LOG_FLAG = False
-LOG_COMMAND = 'none'
+LOG_COMMAND = ''
 REPLACE_FLAG = False
 ORIGINAL_T = ''
 REPLACE_T = ''
+AUTONUM = 0
 
 
-class MyTCPHandler(socketserver.BaseRequestHandler):
-	CONNECTED = False                   # connection flag
-	BUFFER_SIZE = 4096
+"""
+REPLACE: Not Tested -------------------------------------------------------------------------------------------------------
+"""
+#Read response as a string, replace target string with replacement string
+def replacer(data):
+	response = data.replace(ORIGINAL_T, REPLACE_T)
+	return response
+
+"""
+LOGGING: Work in Progress ------------------------------------------------------------------------------------------------
+"""
+def logging(data, prefix):
+	
+	
+	#RAW
+	if LOG_COMMAND == "-raw":
+		data = data.split(b'\n')
+		#print("DEBUG: raw log")
+		for line in data:
+			line = line.decode("utf-8")
+			print(prefix + " " +  str(line))
 
 
-	"""
-	REPLACE: Not Tested -------------------------------------------------------------------------------------------------------
-	"""
-	#Read response as a string, replace target string with replacement string
-	def replacer(data, response, target, targetReplacement):
-		"""Might have to change this to deal with bytearray instead of string"""
-		data = data
-		response = str(response)
-		target = str(target)
-		targetReplacement = str(targetReplacement)
-		response = response.replace(target, targetReplacement)
-		return response
 
-	"""
-	LOGGING: Work in Progress ------------------------------------------------------------------------------------------------
-	"""
-	def logging(data, response, logCommand):
-		data = data.split(b'\r\n')
-		response = response.split(b'\r\n')
-		logCommand = logCommand
+
+	#STRIP
+	elif LOG_COMMAND == "-strip":
+		data = data.split(b'\n')
+		#print("DEBUG: strip log")
+		for line in data:
+			line= line.decode("utf-8")
+			lineString = str(line)
+			#print(prefix, end="")
+			for x in lineString:
+				#ADD CHECK IF PRINTABLE CHR HERE
+				if not(x in string.printable):
+					lineString = lineString.replace(x, ".")
+				#print(str(x), end="")
+			
+			print(prefix + " " + lineString)
+
+
+	#HEXDUMP
+	elif LOG_COMMAND == "-hex":
+		data = data.split(b'\n')
+		#print("DEBUG: hex log")
+		for line in data:
+			line = line.decode("utf-8")
+			lineString = str(line)
+			#print(prefix, end="")
+			for x in lineString:
+				hx = ":".join("{:02x}".format(ord(c)) for c in x)
+				lineString = lineString.replace(x,hx)
+				#print(x, end="")
+			print(prefix + " " + lineString)
+
+
+	#AUTON
+	elif LOG_COMMAND == "-autoN":
+		print("DEBUG: autoN log")
+		chunks = [data[i:i + n] for i in range(0, len(data), AUTONUM)]
+		for x in chunks:
+			xString = str(x)
+			#print(prefix, end="")
+			for y in x:
+				y = str(y)
+				bitValue = ord(y)
+				if bitValue == 9:
+					yString == "\t"
+				elif bitValue == 92:
+					yString == "\\\\"
+				elif bitValue == 10:
+					yString == "\n"
+				elif bitValue == 13:
+					yString == "\r"
+				elif bitValue < 32 or bitValue >127:
+					yString = "\\" + str(bitValue)
+				else:
+					yString = str(y)
+				xString = xString.replace(y, yString)
+			#print("\n")
+			print(prefix + xString)
 		
-		#RAW
-		if logCommand == "-raw":
-			print("DEBUG: raw log")
-			for line in data:
-				print(OUTGOING, end="")
-				for x in line:
-					print(chr(x), end="")
-			for line in response:
-				print(INCOMING, end="")
-				for x in line:
-					print(chr(x), end="")
-
-		#STRIP
-		elif logCommand == "-strip":
-			print("DEBUG: strip log")
-			for line in data:
-				print(OUTGOING, end="")
-				for x in line:
-					#ADD CHECK IF PRINTABLE CHR HERE
-					if not(x in string.printable):
-						x = "."
-					print(x, end="")
-
-			for line in response:
-				print(INCOMING, end="")
-				for x in line:
-					#ADD CHECK IF PRINTABLE CHR HERE
-					if not(x in string.printable):
-						x = "."
-					print(x, end="")
-
-		#HEXDUMP
-		elif logCommand == "-hex":
-			print("DEBUG: hex log")
-			for line in data:
-				print(OUTGOING, end="")
-				for x in line:
-					hx = ":".join("{:02x}".format(ord(c)) for c in x)
-					print(hx, end="")
-			for line in response:
-				print(INCOMING, end="")
-				for x in line:
-					hx = ":".join("{:02x}".format(ord(c)) for c in x)
-					print(hx, end="")
-		#AUTON
-		elif logCommand == "-autoN":
-			print("DEBUG: autoN log")
-			deletethis = 1
-			#
 
 
 
-	#CONNECT TO REMOTE SERVER
-	"""
-	REQUESTS: Work in Progress -----------------------------------------------------------------------------------------------
-	"""
-	def requests(data, srcPort, server, dstPort):
-		#CREATE TCP/IP SOCKET
-		remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		remoteSocket.connect(server, dstPort)
-		#Send Data
-		remoteSocket.send(data)
-		#Get Response
-		response = (remoteSocket.recv(4096)).decode("utf-8")
-		print("DEBUG: \n")
-		print(response) #debug
-		return response
+def connection_handler(client, destination_socket):
+	inputs = [client, destination_socket]
 
-	"""
-	HANDLE: ------------------------------------------------------------------------------------------------------------------
-	"""
-	# MAIN FUNCTION HERE
-	print("DEBUG: begin handle")
-	def handle(self):
-    	
-		serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)			# Create a socket object
-    	serverSocket.bind((HOST, SRC_PORT))
-   	 	serverSocket.listen(5)
+	while 1:
+		readable, writeable, exceptional = select.select(inputs, [], [])
+		for sock in readable:
+	
+			data = sock.recv(1024)
+			modified_data = data
 
-		while True:
-    		client, client_addr = serverSocket,accept()
-			clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			client_socket.connect((SERVER, DST_PORT))
-    	"""
-		#Receive data from user
-		self.CONNECTED = True
-		timeNow = time.strftime("%a %b %d %H:%M:%S")
-		print("New Connection: " + timeNow + ", from " + self.client_address[0])
+			# If no data provided, we close the current connection stream.
+			if not data:
+				print("No data provided. Connection closed.")
+				client.close()
+				destination_socket.close()
+				return
 
-		while self.CONNECTED:
-			data = self.request.recv(self.BUFFER_SIZE)
-			# Check the input
-			if len(data) == self.BUFFER_SIZE:
-				while 1:
-					try: # Error means no more data
-						data += self.request.recv(self.BUFFER_SIZE, socket.MSG_DONTWAIT)
-					except:
-						break
-			if len(data) == 0:
-				break 
-			data = data.decode("utf-8")
+			# Check if socket sending data is destination socket and if so, send data to the client
+			if sock == destination_socket:
 
-		#OPEN REMOTE SOCKET HERE
+				if REPLACE_FLAG == True:
+					modified_data = replacer(data)
 
-		# Call commands here, get initial response
-		#response = self.requests(srcPort, server, dstPort, data)
+				if LOG_FLAG == True:
+					logging(data, INCOMING)
+				"""
+				if replace_option != "":
 
-		# Replace, log
-		#if logFlag == True:
-		#	self.logging(data, response, logCommand)
-		#if replaceFlag == True:
-		#	self.replacer(data, response,target,targetReplacement)
+					modified_data = replace_data(option_one, option_two, data)
 
-		# Send out final response
-		#print(response)
+					# Encode it back
+					modified_data = modified_data.encode()
 
-		"""
+				if log_option != "":
+
+					message = log_data(log_option, modified_data, n_bytes)
+
+					counter = 0
+					while counter < len(message):
+
+						print("<--- " + str(message[counter]) + "\n")
+
+						counter += 1
+				"""
+				client.sendall(data)
+
+			# Otherwise send data from client to the destination
+			else:
+				if REPLACE_FLAG == True:
+					modified_data = replacer(data)
+
+				if LOG_FLAG == True:
+					logging(data, OUTGOING)
+				"""
+				if replace_option != "":
+
+					modified_data = replace_data(option_one, option_two, data)
+
+					# Encode it back
+					modified_data = modified_data.encode()
+
+				if log_option != "":
+
+					message = log_data(log_option, modified_data, n_bytes)
+
+					# Send the source message host to the destination
+					counter = 0
+					while counter < len(message):
+
+						print("---> " + str(message[counter]) + "\n")
+
+						counter += 1
+				"""
+				destination_socket.sendall(data)
 
 """
 THIS IS STILL A2 CODE
 """
 if __name__ == "__main__":
-		
+	# Parse arguments
 	if len(sys.argv) < 4 or len(sys.argv) == 6 or len(sys.argv) > 8 : 	# Minimum number of arguments is 3, maximum is 7
 																		#Impossible to have ./A2.py + 5 arguments
 		print("\nIncorrect number of parameters: ")
@@ -180,6 +200,10 @@ if __name__ == "__main__":
 			LOG_FLAG = True
 			LOG_COMMAND = sys.argv[1]
 			#print("Log command = " + LOG_COMMAND)
+		elif sys.argv[1].startswith("-auto"):
+			LOG_FLAG = True
+			AUTONUM = sys.argv[1][5:]
+			LOG_COMMAND = "-autoN"
 		else: #user wrote something over than a logOption
 			print("\nIncorrect Usage of Logging Program: ")
 			print("Usage: ./A3.py [logOptions] [replaceOptions] srcPort server dstPort")
@@ -191,6 +215,10 @@ if __name__ == "__main__":
 			LOG_FLAG = True
 			LOG_COMMAND = sys.argv[1]
 			print("Log command = " + LOG_COMMAND)
+		elif sys.argv[1].startswith("-auto"):
+			LOG_FLAG = True
+			AUTONUM = sys.argv[1][5:]
+			LOG_COMMAND = "-autoN"
 
 	HOST = "localhost"
 	DST_PORT = int(sys.argv[len(sys.argv) - 1])
@@ -212,8 +240,29 @@ if __name__ == "__main__":
 	
 	#print(ORIGINAL_T,REPLACE_T)
 
-	print("Port logger running: srcPort=" + str(SRC_PORT) + " host=" + HOST + " dstPort=" + str(DST_PORT))
+	print("Port logger running: srcPort=" + str(SRC_PORT) + " host=" + SERVER + " dstPort=" + str(DST_PORT))
 	#print("Log command = " + LOG_COMMAND)
 
-	server = socketserver.ThreadingTCPServer((HOST, SRC_PORT), MyTCPHandler)
-	server.serve_forever()
+	sourceSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sourceSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	#sourceSocket.setblocking(0)
+	sourceSocket.bind((HOST, SRC_PORT))
+	sourceSocket.listen(5)
+
+	while 1:
+		client, addr = sourceSocket.accept()
+		
+
+		timeNow = time.strftime("%a %b %d %H:%M:%S")
+		print("New Connection: " + timeNow + ", from " + str(addr[0]))
+
+		# Create a forwading socket that will forward information
+		# obtained from the client to the destination through our server
+		destination_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		destination_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		#destination_socket.setblocking(0)
+		# Connect to our destination server
+		destination_socket.connect((SERVER, DST_PORT))
+
+		# Start a thread that will handle the transfer of data between source and destination
+		threading.Thread(target=connection_handler, args=(client, destination_socket)).start()
