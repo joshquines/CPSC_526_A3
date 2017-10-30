@@ -105,7 +105,7 @@ def clientHandler(client, dstSocket):
 			if not data:
 				print("No data provided. Connection closed.")
 				client.close()
-				destination_socket.close()
+				dstSocket.close()
 				return
 
 			# If socket sending data is the destination socket send the data to the client
