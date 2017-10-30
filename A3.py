@@ -21,12 +21,15 @@ ORIGINAL_T = ''
 REPLACE_T = ''
 AUTONUM = 0
 
-
+"""
+Find ORIGINAL_T in data and replace with REPLACE_T
+"""
 def replacer(data):
 	original = ORIGINAL_T.encode()
 	replacement = REPLACE_T.encode()
 	response = data.replace(original, replacement)
 	return response
+
 
 def logging(data, prefix):
 	#RAW
@@ -34,6 +37,7 @@ def logging(data, prefix):
 		data = data.split(b'\n')
 		#print("DEBUG: raw log")
 		for line in data:
+    		#decode each line in data and print
 			line = line.decode("utf-8")
 			print(prefix + " " +  str(line))
 
@@ -42,15 +46,13 @@ def logging(data, prefix):
 		data = data.split(b'\n')
 		#print("DEBUG: strip log")
 		for line in data:
+    		# decode each line in data
 			line= line.decode("utf-8")
 			lineString = str(line)
-			#print(prefix, end="")
+			# replace byte if not printable
 			for x in lineString:
-				#ADD CHECK IF PRINTABLE CHR HERE
 				if not(x in string.printable):
-					lineString = lineString.replace(x, ".")
-				#print(str(x), end="")
-			
+					lineString = lineString.replace(x, ".")			
 			print(prefix + " " + lineString)
 
 	#HEXDUMP
@@ -60,21 +62,20 @@ def logging(data, prefix):
 		for line in data:
 			line = line.decode("utf-8")
 			lineString = str(line)
-			#print(prefix, end="")
+			# get hex value of each character and replace the original character with its hex value in each line
 			for x in lineString:
 				hx = ":".join("{:02x}".format(ord(c)) for c in x)
 				lineString = lineString.replace(x,hx)
-				#print(x, end="")
 			print(prefix + " " + lineString)
 
 	#AUTON
 	elif LOG_COMMAND == "-autoN":
 		#print("DEBUG: autoN log")
+		# split data into chunks of AUTONUM size
 		chunks = [data[i:i + AUTONUM] for i in range(0, len(data), AUTONUM)]
 		for x in chunks:
-			#x = x.decode("utf-8")
 			xString = str(x)
-			#print(prefix, end="")
+			# see which characters to replace or print raw
 			for y in x:
 				y = chr(y)
 				bitValue = ord(y)
@@ -95,7 +96,6 @@ def logging(data, prefix):
 		
 def clientHandler(client, dstSocket):
 	inputs = [client, dstSocket]
-
 	while 1:
 		readable, writeable, exceptional = select.select(inputs, [], [])
 		for sock in readable:
@@ -110,7 +110,6 @@ def clientHandler(client, dstSocket):
 
 			# If socket sending data is the destination socket send the data to the client
 			if sock == dstSocket:
-
 				if REPLACE_FLAG == True:
 					logData = replacer(data)
 
@@ -128,9 +127,7 @@ def clientHandler(client, dstSocket):
 
 				dstSocket.sendall(data)
 
-"""
-THIS IS STILL A2 CODE
-"""
+
 if __name__ == "__main__":
 	# Parse arguments
 	if len(sys.argv) < 4 or len(sys.argv) == 6 or len(sys.argv) > 8 : 	# Minimum number of arguments is 3, maximum is 7
